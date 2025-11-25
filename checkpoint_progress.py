@@ -5,30 +5,25 @@ import glob
 import re
 from model import Llama
 from transformers import GPT2TokenizerFast
+import config
 
 # --- 1. CONFIGURATION ---
 # The prompt you want to test across all ages
 TEST_PROMPT = "The scientist opened the door and found"
 
-# Must match your train.py architecture exactly!
-DIM = 768
-DEPTH = 12
-HEADS = 12
-MAX_SEQ_LEN = 1024  # Or 512, whichever you used in training
-
 # --- 2. SETUP ---
-device = "mps" if torch.backends.mps.is_available() else "cpu"
+device = config.DEVICE
 print(f"Running on {device}")
 
 tokenizer = GPT2TokenizerFast.from_pretrained("gpt2")
 
 # Initialize model once (we will just swap weights inside)
 model = Llama(
-    vocab_size=50257,
-    dim=DIM,
-    depth=DEPTH,
-    heads=HEADS,
-    max_seq_len=MAX_SEQ_LEN
+    vocab_size=config.VOCAB_SIZE,
+    dim=config.DIM,
+    depth=config.DEPTH,
+    heads=config.HEADS,
+    max_seq_len=config.MAX_SEQ_LEN
 ).to(device)
 
 model.eval()

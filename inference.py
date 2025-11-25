@@ -2,9 +2,10 @@ import torch
 import torch.nn.functional as F
 from model import Llama
 from transformers import GPT2TokenizerFast
+import config
 
 # --- 1. SETUP ---
-device = "mps" if torch.backends.mps.is_available() else "cpu"
+device = config.DEVICE
 print(f"Running on {device}")
 
 # Load Tokenizer
@@ -13,11 +14,11 @@ tokenizer = GPT2TokenizerFast.from_pretrained("gpt2")
 # --- 2. INITIALIZE MODEL ---
 # MUST MATCH YOUR TRAIN.PY CONFIG EXACTLY
 model = Llama(
-    vocab_size=50257,
-    dim=768,        # Match train.py
-    depth=12,       # Match train.py
-    heads=12,       # Match train.py
-    max_seq_len=1024 
+    vocab_size=config.VOCAB_SIZE,
+    dim=config.DIM,        # Match train.py
+    depth=config.DEPTH,       # Match train.py
+    heads=config.HEADS,       # Match train.py
+    max_seq_len=config.MAX_SEQ_LEN 
 ).to(device)
 
 # --- 3. LOAD WEIGHTS ---
@@ -34,7 +35,7 @@ except FileNotFoundError:
 model.eval()
 
 # --- 4. GENERATION FUNCTION ---
-def generate(prompt, max_new_tokens=100, temperature=0.8):
+def generate(prompt, max_new_tokens=100, temperature=0.6):
     # 1. Encode the prompt
     input_ids = tokenizer.encode(prompt, return_tensors="pt").to(device)
     

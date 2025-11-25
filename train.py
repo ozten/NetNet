@@ -9,24 +9,15 @@ from model import Llama  # <--- This imports your class from model.py
 from datasets import load_dataset
 from transformers import GPT2TokenizerFast
 from tqdm import tqdm
+import config
 
 # --- 1. SETUP DEVICE ---
-def get_device():
-    if torch.backends.mps.is_available():
-        return "mps"
-    elif torch.cuda.is_available():
-        return "cuda"
-    return "cpu"
-
-device = get_device()
+device = config.DEVICE
 print(f"Training on {device}")
 
 # --- 2. HYPERPARAMETERS (125M Config) ---
 # 125M is roughly: dim=768, depth=12, heads=12
-BATCH_SIZE = 16         # Tune for your GPU Memory
-BLOCK_SIZE = 512       # Sequence length (increase to 1024 later)
-LEARNING_RATE = 6e-4
-MAX_ITERS = 5000        # 5000
+# Hyperparameters moved to config.py
 
 
 # --- 3. LOAD DATA & TOKENIZER ---
@@ -47,7 +38,7 @@ def get_batch():
     
     # 1. Pick random indices
     # We use randint because 'train_data' is now a Dataset object, not a simple list
-    random_indices = [random.randint(0, len(train_data) - 1) for _ in range(BATCH_SIZE)]
+    random_indices = [random.randint(0, len(train_data) - 1) for _ in range(config.BATCH_SIZE)]
     
     # 2. Get the actual strings
     # We must access ['text'] to get the string out of the dictionary row
@@ -58,7 +49,7 @@ def get_batch():
     
     # 3. Tokenize
     encodings = tokenizer(batch_texts, truncation=True, padding="max_length", 
-                          max_length=BLOCK_SIZE+1, return_tensors="pt")
+                          max_length=config.MAX_SEQ_LEN+1, return_tensors="pt")
     
     input_ids = encodings['input_ids'].to(device)
     
@@ -70,11 +61,11 @@ def get_batch():
 # --- 4. INITIALIZE MODEL ---
 print("Initializing Llama model...")
 model = Llama(
-    vocab_size=50257,  # GPT-2 vocab size
-    dim=768,
-    depth=12,
-    heads=12,
-    max_seq_len=BLOCK_SIZE
+    vocab_size=config.VOCAB_SIZE,  # GPT-2 vocab size
+    dim=config.DIM,
+    depth=config.DEPTH,
+    heads=config.HEADS,
+    max_seq_len=config.MAX_SEQ_LEN
 ).to(device)
 
 print(f"Parameters: {sum(p.numel() for p in model.parameters())/1e6:.2f}M")

@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import math
+import config
 
 class RMSNorm(nn.Module):
     def __init__(self, dim: int, eps: float = 1e-6):
@@ -34,7 +35,7 @@ class SwiGLU(nn.Module):
         return self.w2(F.silu(self.w1(x)) * self.w3(x))
 
 class RoPE(nn.Module):
-    def __init__(self, dim: int, max_seq_len: int = 4096, theta: float = 10000.0):
+    def __init__(self, dim: int, max_seq_len: int = config.ROPE_SEQ_LEN, theta: float = 10000.0):
         super().__init__()
         # 1. Calculate frequencies (theta_i)
         # dim must be even
