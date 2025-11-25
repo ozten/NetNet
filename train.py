@@ -71,9 +71,10 @@ model = Llama(
 print(f"Parameters: {sum(p.numel() for p in model.parameters())/1e6:.2f}M")
 
 
-optimizer = torch.optim.AdamW(model.parameters(), lr=LEARNING_RATE)
+optimizer = torch.optim.AdamW(model.parameters(), lr=config.LEARNING_RATE)
 # --- 5. RECOVERY LOGIC (### NEW ###) ---
 start_iter = 0
+csv_file = "training_loss.csv"
 
 # Find all files matching the pattern
 checkpoint_files = glob.glob("checkpoint_step_*.pt")
@@ -103,26 +104,42 @@ if checkpoint_files:
         model.load_state_dict(checkpoint_data)
         print("Loaded model weights only (Optimizer reset).")
 
+    # Ensure CSV exists if resuming
+    if not os.path.exists(csv_file):
+        with open(csv_file, "w") as f:
+            f.write("step,loss\n")
+
 else:
     print("No checkpoints found. Starting from scratch.")
+    # Initialize CSV
+    with open(csv_file, "w") as f:
+        f.write("step,loss\n")
 
-pbar = tqdm(range(start_iter, MAX_ITERS), desc="Training", initial=start_iter, total=MAX_ITERS)
+pbar = tqdm(range(start_iter, config.MAX_ITERS), desc="Training", initial=start_iter, total=config.MAX_ITERS)
 
 # --- 5. TRAINING LOOP ---
 model.train()
 print("Starting training...")
 
-for i in pbar:
-    # A. Get Data
-    xb, yb = get_batch()
-    
-    # B. Forward Pass
-    logits, loss = model(xb, yb)
-    
-    # C. Backward Pass
-    optimizer.zero_grad(set_to_none=True)
-    loss.backward()
-    optimizer.step()
+# Open CSV in append mode
+with open(csv_file, "a") as f_log:
+    for i in pbar:
+        # A. Get Data
+        xb, yb = get_batch()
+        
+        # B. Forward Pass
+        logits, loss = model(xb, yb)
+        
+        # C. Backward Pass
+        optimizer.zero_grad(set_to_none=True)
+        loss.backward()
+        optimizer.step()
+
+        # Log to CSV
+        f_log.write(f"{i},{loss.item():.4f}\n")
+        # Optional: flush every N steps if needed, but OS buffering is usually fine for local runs
+        if i % 10 == 0:
+            f_log.flush()
     
     if i % 10 == 0:
         # print(f"Step {i}: Loss {loss.item():.4f}")
