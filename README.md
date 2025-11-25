@@ -1,6 +1,6 @@
 # NetNet
 
-My 125M scale Neural Network trained on data from the interNet playground.
+My playground is a 125M scale Neural Network trained on data from the interNet.
 
 ## Goals:
 * Portable code between Apple MPS and CUDA

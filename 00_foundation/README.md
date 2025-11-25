@@ -1,5 +1,7 @@
 # NetNet Foundation Model
 
+![](./netnet_foundation.png)
+
 ## Setup
 
     source .venv/bin/activate
