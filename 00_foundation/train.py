@@ -164,6 +164,14 @@ with open(csv_file, "a") as f_log:
 
 print("Training complete!")
 # Add this to the end of train.py
+print(f"Saving final checkpoint at step {config.MAX_ITERS}...")
+torch.save({
+    'step': config.MAX_ITERS,
+    'model_state_dict': model.state_dict(),
+    'optimizer_state_dict': optimizer.state_dict(),
+    'loss': loss.item(),
+}, f"checkpoint_step_{config.MAX_ITERS}.pt")
+
 print("Saving model...")
 torch.save(model.state_dict(), "model.pt")
 print("Model saved to model.pt")
