@@ -58,9 +58,9 @@ def generate(prompt, max_new_tokens=50):
             logits = logits / 0.6 
             probs = F.softmax(logits, dim=-1)
             # Normal inferencc            
-            # idx_next = torch.multinomial(probs, num_samples=1)
+            idx_next = torch.multinomial(probs, num_samples=1)
             # Greedy decoding (known best answer)
-            idx_next = torch.argmax(logits, dim=-1, keepdim=True)            
+            #idx_next = torch.argmax(logits, dim=-1, keepdim=True)            
             input_ids = torch.cat((input_ids, idx_next), dim=1)
 
     return tokenizer.decode(input_ids[0].cpu().numpy())
@@ -84,10 +84,23 @@ print("="*60)
 for filepath in files:
     step_count = get_step_number(filepath)
     
-    # Load weights
     try:
-        state_dict = torch.load(filepath, map_location=device)
+        # 1. Load the file to CPU first to inspect it safely
+        checkpoint = torch.load(filepath, map_location=device)
+        
+        # 2. Check if it's a "Full Checkpoint" (dict with keys like 'model_state_dict')
+        if "model_state_dict" in checkpoint:
+            # Extract just the weights
+            state_dict = checkpoint["model_state_dict"]
+        else:
+            # It's likely just the raw weights
+            state_dict = checkpoint
+
+        # 3. Load into model
+        # strict=False allows us to ignore non-weight keys if any sneak in, 
+        # but usually cleaning it above is better.
         model.load_state_dict(state_dict)
+        
     except Exception as e:
         print(f"Skipping {filepath}: {e}")
         continue
